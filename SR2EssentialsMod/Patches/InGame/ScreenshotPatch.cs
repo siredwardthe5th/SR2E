@@ -4,7 +4,7 @@ using SR2E.Menus;
 
 namespace SR2E.Patches.InGame;
 
-[HarmonyPatch(typeof(GameContext), nameof(GameContext.TakeScreenshot))]
+[HarmonyPatch(typeof(GameContext), "TakeScreenshot")]
 internal static class ScreenshotPatch
 {
     internal static System.Collections.IEnumerator WaitForUnpause()
