@@ -20,6 +20,7 @@ using SR2E.Menus;
 using SR2E.Menus.Debug;
 using SR2E.Patches.General;
 using SR2E.Prism;
+using SR2E.Patches.Context;
 using SR2E.Prism.Lib;
 using SR2E.Storage;
 
@@ -33,7 +34,7 @@ public static class BuildInfo
     public const string Description = "Essential stuff for Slime Rancher 2";
     public const string Author = "ThatFinn";
     public const string Contributors = "PinkTarr, shizophrenicgopher, Atmudia";
-    public const string CodeVersion = "3.6.2";
+    public const string CodeVersion = "3.6.3";
     public const string DownloadLink = "https://sr2e.sr2.dev/";
     public const string SourceCode = "https://github.com/ThatFinnDev/SR2E";
     public const string Nexus = "https://www.nexusmods.com/slimerancher2/mods/60";
@@ -46,7 +47,7 @@ public static class BuildInfo
     /// For dev versions, use "-dev". Do not add a build number!<br />
     /// Add "+metadata" only in dev builds!
     /// </summary>
-    public const string DisplayVersion = "3.6.2";
+    public const string DisplayVersion = "3.6.3-alpha.2";
 
     //allowmetadata, checkupdatelink,
     internal static readonly TripleDictionary<string, bool, string> PRE_INFO = new ()
@@ -84,6 +85,7 @@ public class SR2EEntryPoint : MelonMod
     
     private static bool earlyRegistered = false;
     private static bool _usePrism = false;
+    private bool patchedPrism = false;
     internal static bool usePrism => _usePrism;
     static MelonLogger.Instance unityLog = new MelonLogger.Instance("Unity");
     internal static string _mlVersion = "undefined";
@@ -284,10 +286,11 @@ public class SR2EEntryPoint : MelonMod
             }
         }
     }
-    void PatchGame()
+    void PatchGame(bool justPrism = false)
     {
         if(!_usePrism) try { _usePrism= prefs.GetEntry<bool>("forceUsePrism").Value; }catch { }
         if (!AllowPrism.HasFlag()) _usePrism = false;
+        if (_usePrism) patchedPrism = true;
         var types = AccessTools.GetTypesFromAssembly(MelonAssembly.Assembly);
         var devPatches = DevMode.HasFlag();
         foreach (var type in types)
@@ -295,8 +298,11 @@ public class SR2EEntryPoint : MelonMod
             if (type == null) continue;
             try
             {
+                bool isPrismPatch = type.GetCustomAttribute<PrismPatch>() != null;
                 // Skip entire class if marked as a library patch and library disabled
-                if (!_usePrism && type.GetCustomAttribute<PrismPatch>() != null) continue;
+                if (!_usePrism && isPrismPatch) continue;
+                // When re-patching for Prism only, skip non-Prism patches
+                if (justPrism && !isPrismPatch) continue;
                 // Skip entire class if marked as a dev patch and devmode disabled
                 if(!devPatches && type.GetCustomAttribute<DevPatch>() != null) continue;
                 var classPatches = HarmonyMethodExtensions.GetFromType(type);
@@ -329,7 +335,7 @@ public class SR2EEntryPoint : MelonMod
     public static bool LoadExpansion(SR2EExpansionV3 expansionV3)
     {
         StaticOnEarlyInitializeMelon();
-        if (AllowExpansionsV3.HasFlag())
+        if (AllowExpansionsV3.HasFlag() && !SystemContextPatch.didStart)
         {
             bool shouldUnregister = false;
             var attributes = expansionV3.MelonBase.MelonAssembly.Assembly.GetCustomAttributes<AssemblyMetadataAttribute>();
@@ -351,8 +357,16 @@ public class SR2EEntryPoint : MelonMod
                 expansionsV3.Add(expansionV3);
                 SR2ECallEventManager.LoadAssemblies(new List<Assembly>(){expansionV3.MelonBase.MelonAssembly.Assembly});
                 if(hasInitialized) expansionV3.OnInitializeMelon();
+                if (_usePrism && !instance.patchedPrism)
+                {
+                    instance.PatchGame(justPrism: true);
+                }
                 return true;
             }
+        }
+        if (!AllowExpansionsV3.HasFlag() && SystemContextPatch.didStart)
+        {
+            MelonLogger.Error("Expansion is being registered too late!");
         }
         expansionV3.MelonBase.Unregister();
         return false;

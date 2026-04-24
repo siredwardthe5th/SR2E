@@ -1,4 +1,5 @@
 using Il2CppMonomiPark.SlimeRancher.UI.Options;
+using SR2E.Utils;
 
 namespace SR2E.Patches.Options;
 
@@ -7,6 +8,9 @@ internal static class OptionsUIRootApplyPatch
 {
     internal static int realMasterTextureLimit = 0;
     internal static int customMasterTextureLimit = -1;
+    internal static int customMaxFPS = -1;
+
+    private static bool isCheckingFPS = false;
 
     public static void Apply()
     {
@@ -20,9 +24,28 @@ internal static class OptionsUIRootApplyPatch
         }
     }
 
+    public static void CheckCustomFPS()
+    {
+        if (customMaxFPS != -1)
+        {
+            isCheckingFPS = true;
+            QualitySettings.vSyncCount = 0;
+            Application.targetFrameRate = customMaxFPS;
+            ActionsEUtil.ExecuteInTicks(() => CheckCustomFPS(), 5);
+        }
+        else
+        {
+            isCheckingFPS = false;
+        }
+    }
+
     public static void Postfix()
     {
         realMasterTextureLimit = QualitySettings.masterTextureLimit;
         Apply();
+        if (!isCheckingFPS)
+        {
+            CheckCustomFPS();
+        }
     }
 }

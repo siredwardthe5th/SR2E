@@ -145,6 +145,7 @@ internal class SR2EDebugUI : MonoBehaviour
 	{
 		if (!isEnabled) return;
 
+		if (SR2ECounterGateManager.disableCheats) return;
 		if (MenuEUtil.isAnyMenuOpen) return;
 		if (MenuEUtil.isAnyPopUpOpen) return;
 		if (Time.timeScale == 0)  return;
@@ -190,6 +191,12 @@ internal class SR2EDebugUI : MonoBehaviour
 							"\nREMOVE 1000 CREDITS     KeyPad- " +
 							"\nDECREMENT TIME OF DAY     [ " +
 							"\nINCREMENT TIME OF DAY     ] </b>";
+			if (SR2ECounterGateManager.disableCheats) text = "<b>DEBUG MODE DISABLED BECAUSE OF CHEATS</b>";
+			switch (systemContext.SceneLoader.CurrentSceneGroup.name)
+			{
+				case "CompanyLogo": return;
+				case "LoadScene": return;
+			}
 			for (int i = -2; i <= 2; i += 2)
 				for (int j = -2; j <= 2; j += 2)
 				{
