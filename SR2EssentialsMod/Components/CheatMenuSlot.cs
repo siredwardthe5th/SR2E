@@ -44,8 +44,8 @@ internal class CheatMenuSlot : MonoBehaviour
         string itemName = type.GetName().Replace("'","").Replace(" ","");
         entryInput.text = itemName;
         slot.Clear();
-        sceneContext.PlayerState.Ammo.MaybeAddToSpecificSlot(type, null, slotID, 
-            (int)amountSlider.value);
+        var identifiable = type.prefab.GetComponent<Identifiable>();
+        sceneContext.PlayerState.Ammo.MaybeAddToSpecificSlot(identifiable.AmmoMetadata, slotID, (int)amountSlider.value, false);
     }
     private void Select()
     {

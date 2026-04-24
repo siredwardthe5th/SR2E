@@ -28,7 +28,7 @@ internal static class SR2PauseMenuButtonPatch
         try
         {
             PauseMenuRoot pauseMenuRoot = __instance;
-            PauseItemModelList pauseItemModelList = pauseMenuRoot.pauseItemModelList;
+            PauseItemModelList pauseItemModelList = pauseMenuRoot._pauseItemModelList;
             Il2CppSystem.Collections.Generic.List<PauseItemModel> items = pauseItemModelList.items;
             foreach (CustomPauseMenuButton button in buttons)
             {
@@ -77,7 +77,7 @@ internal static class SR2PauseMenuButtonPatch
             }
             
             pauseItemModelList.items = items;
-            pauseMenuRoot.pauseItemModelList = pauseItemModelList;
+            pauseMenuRoot._pauseItemModelList = pauseItemModelList;
             
         }
         catch (Exception e) { MelonLogger.Error(e);}

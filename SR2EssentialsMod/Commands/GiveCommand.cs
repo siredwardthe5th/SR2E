@@ -31,8 +31,9 @@ internal class GiveCommand : SR2ECommand
         if (args.Length == 2) if(!TryParseInt(args[1], out amount,1, true)) return false;
 
         
+        var identifiable = type.prefab.GetComponent<Identifiable>();
         for (int i = 0; i < amount; i++)
-            sceneContext.PlayerState.Ammo.MaybeAddToSlot(type, null,type.GetAppearanceSet());
+            sceneContext.PlayerState.Ammo.MaybeAddToAnySlot(identifiable.AmmoMetadata, false);
 
         SendMessage(translation("cmd.give.success",amount,itemName));
         return true;
