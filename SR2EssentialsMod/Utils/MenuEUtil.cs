@@ -197,6 +197,7 @@ public static class MenuEUtil
     }
     public static SR2EMenu GetOpenMenu()
     {
+        if (SR2EEntryPoint.SR2EStuff == null) return null;
         foreach (var child in SR2EEntryPoint.SR2EStuff.GetChildren())
         {
             if (!child.activeSelf) continue;

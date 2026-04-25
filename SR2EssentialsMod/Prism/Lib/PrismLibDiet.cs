@@ -54,11 +54,11 @@ public static class PrismLibDiet
        if (eatmap == null) return false;
        foreach (var entry in list)
        {
-           if (entry.BecomesIdent != entry.BecomesIdent) continue;
-           if (entry.EatsIdent != entry.EatsIdent) continue;
-           if (entry.Driver != entry.Driver) continue;
-           if (entry.MinDrive != entry.MinDrive) continue;
-           if (entry.ProducesIdent != entry.ProducesIdent) continue;
+           if (entry.BecomesIdent != eatmap.BecomesIdent) continue;
+           if (entry.EatsIdent != eatmap.EatsIdent) continue;
+           if (entry.Driver != eatmap.Driver) continue;
+           if (entry.MinDrive != eatmap.MinDrive) continue;
+           if (entry.ProducesIdent != eatmap.ProducesIdent) continue;
            return false;
        } 
        return true;
