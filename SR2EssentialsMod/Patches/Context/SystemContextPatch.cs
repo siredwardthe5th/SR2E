@@ -1,10 +1,7 @@
 using System.Collections;
 using System.Linq;
 using System;
-using System.Reflection;
-using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.Injection;
-using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using SR2E.Enums;
 using SR2E.Managers;
 using SR2E.Storage;
@@ -52,7 +49,9 @@ internal class SystemContextPatch
         bundle = EmbeddedResourceEUtil.LoadIl2CppBundle("Assets.srtwoessentials.assetbundle");
         if (bundle == null) { MelonLogger.Error("[SR2E] Asset bundle failed to load"); return; }
 
-        foreach (string path in bundle.GetAllAssetNames())
+        string[] allAssetNames = bundle.GetAllAssetNames();
+
+        foreach (string path in allAssetNames)
         {
             if (!path.StartsWith(menuPath, StringComparison.OrdinalIgnoreCase)) continue;
             if (!path.EndsWith(prefabSuffix, StringComparison.OrdinalIgnoreCase)) continue;
@@ -70,7 +69,23 @@ internal class SystemContextPatch
             MenuEUtil.validThemes[key].Add(theme);
         }
 
-        MelonCoroutines.Start(LoadBundleAssetsCoroutine(__instance));
+        foreach (string name in allAssetNames)
+        {
+            var asset = bundle.LoadAsset(name);
+            if (asset == null) { MelonLogger.Warning($"[SR2E] Failed to load asset: {name}"); continue; }
+            if (asset.TryCast<Shader>() != null)
+            {
+                var shader = asset.Cast<Shader>();
+                shader.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                loadedShaders[asset.name] = shader;
+            }
+            assets.Add(asset);
+            bundleAssetsByName[asset.name] = asset;
+        }
+
+        if (assets.Count == 0) { MelonLogger.Error("[SR2E] No assets loaded from bundle"); return; }
+
+        MelonCoroutines.Start(SetupMenusCoroutine(__instance));
 
         var lang = __instance.LocalizationDirector.GetCurrentLocaleCode();
         LoadLanguage(lang);
@@ -84,65 +99,8 @@ internal class SystemContextPatch
         SR2ECallEventManager.ExecuteWithArgs(CallEvent.AfterSystemContextLoad, ("systemContext", __instance));
     }
 
-    // Unity 6 removed synchronous LoadAllAssets. Only async variants remain, but the generated
-    // interop calls a null NativeMethodInfoPtr for LoadAllAssetsAsync() causing ExecutionEngineException.
-    // We find the valid (non-zero) NativeMethodInfoPtr and invoke it directly.
-    private static unsafe IntPtr InvokeLoadAllAssetsAsync(IntPtr bundleNativePtr)
+    private static IEnumerator SetupMenusCoroutine(SystemContext systemContext)
     {
-        IntPtr methodInfoPtr = IntPtr.Zero;
-        foreach (var f in typeof(AssetBundle).GetFields(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public))
-        {
-            if (f.FieldType != typeof(IntPtr)) continue;
-            if (!f.Name.Contains("LoadAllAssetsAsync")) continue;
-            if (f.Name.Contains("Type")) continue; // skip the Type-param overload
-            var val = (IntPtr)f.GetValue(null);
-            if (val != IntPtr.Zero) { methodInfoPtr = val; break; }
-        }
-        if (methodInfoPtr == IntPtr.Zero) return IntPtr.Zero;
-
-        IntPtr exc = IntPtr.Zero;
-        IntPtr reqPtr = IL2CPP.il2cpp_runtime_invoke(methodInfoPtr, bundleNativePtr, null, ref exc);
-        return exc != IntPtr.Zero ? IntPtr.Zero : reqPtr;
-    }
-
-    private static IEnumerator LoadBundleAssetsCoroutine(SystemContext systemContext)
-    {
-        IntPtr bundleNativePtr = IntPtr.Zero;
-        foreach (var f in typeof(Il2CppAssetBundle).GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public))
-        {
-            if (f.FieldType != typeof(IntPtr)) continue;
-            var val = (IntPtr)f.GetValue(bundle);
-            if (val != IntPtr.Zero) { bundleNativePtr = val; break; }
-        }
-        if (bundleNativePtr == IntPtr.Zero) { MelonLogger.Error("[SR2E] Could not get native bundle pointer"); yield break; }
-
-        // Invoke LoadAllAssetsAsync via the valid NativeMethodInfoPtr, bypassing the generated
-        // interop which resolves to the null ptr and throws ExecutionEngineException.
-        IntPtr reqPtr = IntPtr.Zero;
-        Exception invokeErr = null;
-        try { reqPtr = InvokeLoadAllAssetsAsync(bundleNativePtr); }
-        catch (Exception e) { invokeErr = e; }
-        if (invokeErr != null || reqPtr == IntPtr.Zero) { MelonLogger.Error($"[SR2E] LoadAllAssetsAsync invoke failed: {invokeErr?.Message}"); yield break; }
-
-        var req = new AssetBundleRequest(reqPtr);
-        while (!req.isDone) yield return null;
-
-        var allAssets = req.allAssets;
-        if (allAssets == null) { MelonLogger.Error("[SR2E] req.allAssets is null"); yield break; }
-
-        foreach (var asset in allAssets)
-        {
-            if (asset == null) continue;
-            if (asset.TryCast<Shader>() != null)
-            {
-                var shader = asset.Cast<Shader>();
-                shader.hideFlags |= HideFlags.DontUnloadUnusedAsset;
-                loadedShaders[asset.name] = shader;
-            }
-            assets.Add(asset);
-            bundleAssetsByName[asset.name] = asset;
-        }
-
         foreach (var obj in assets)
         {
             if (obj == null) continue;
@@ -225,5 +183,6 @@ internal class SystemContextPatch
             }, 1);
             break;
         }
+        yield break;
     }
 }

@@ -212,17 +212,25 @@ public static class MenuEUtil
     private static Sprite _whitePillBg;
     private static Texture2D _whitePillBgTex;
 
+    private static Texture2D LoadWhitePillBgTex()
+    {
+        var ab = Get<AssetBundle>("cc50fee78e6b7bdd6142627acdaf89fa.bundle");
+        if (ab == null) return null;
+        return new Il2CppAssetBundle(ab.Pointer)
+            .LoadAsset("Assets/UI/Textures/MenuDemo/whitePillBg.png")?.TryCast<Texture2D>();
+    }
+
     public static Sprite whitePillBg
     {
         get
         {
             if(_whitePillBg==null)
             {
-                _whitePillBgTex = Get<AssetBundle>("cc50fee78e6b7bdd6142627acdaf89fa.bundle")
-                    .LoadAsset("Assets/UI/Textures/MenuDemo/whitePillBg.png").Cast<Texture2D>();
-                _whitePillBg = Sprite.Create(_whitePillBgTex,
-                    new Rect(0f, 0f, _whitePillBgTex.width, _whitePillBgTex.height),
-                    new Vector2(0.5f, 0.5f), 1f);
+                _whitePillBgTex = LoadWhitePillBgTex();
+                if (_whitePillBgTex != null)
+                    _whitePillBg = Sprite.Create(_whitePillBgTex,
+                        new Rect(0f, 0f, _whitePillBgTex.width, _whitePillBgTex.height),
+                        new Vector2(0.5f, 0.5f), 1f);
             }
 
             return _whitePillBg;
@@ -233,10 +241,7 @@ public static class MenuEUtil
         get
         {
             if(_whitePillBgTex==null)
-            {
-                _whitePillBgTex = Get<AssetBundle>("cc50fee78e6b7bdd6142627acdaf89fa.bundle")
-                    .LoadAsset("Assets/UI/Textures/MenuDemo/whitePillBg.png").Cast<Texture2D>();
-            }
+                _whitePillBgTex = LoadWhitePillBgTex();
 
             return _whitePillBgTex;
         }
