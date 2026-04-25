@@ -1,7 +1,10 @@
 using System.Collections;
 using System.Linq;
 using System;
+using System.Reflection;
+using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.Injection;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using SR2E.Enums;
 using SR2E.Managers;
 using SR2E.Storage;
@@ -49,9 +52,7 @@ internal class SystemContextPatch
         bundle = EmbeddedResourceEUtil.LoadIl2CppBundle("Assets.srtwoessentials.assetbundle");
         if (bundle == null) { MelonLogger.Error("[SR2E] Asset bundle failed to load"); return; }
 
-        string[] allAssetNames = bundle.GetAllAssetNames();
-
-        foreach (string path in allAssetNames)
+        foreach (string path in bundle.GetAllAssetNames())
         {
             if (!path.StartsWith(menuPath, StringComparison.OrdinalIgnoreCase)) continue;
             if (!path.EndsWith(prefabSuffix, StringComparison.OrdinalIgnoreCase)) continue;
@@ -69,23 +70,7 @@ internal class SystemContextPatch
             MenuEUtil.validThemes[key].Add(theme);
         }
 
-        foreach (string name in allAssetNames)
-        {
-            var asset = bundle.LoadAsset(name);
-            if (asset == null) { MelonLogger.Warning($"[SR2E] Failed to load asset: {name}"); continue; }
-            if (asset.TryCast<Shader>() != null)
-            {
-                var shader = asset.Cast<Shader>();
-                shader.hideFlags |= HideFlags.DontUnloadUnusedAsset;
-                loadedShaders[asset.name] = shader;
-            }
-            assets.Add(asset);
-            bundleAssetsByName[asset.name] = asset;
-        }
-
-        if (assets.Count == 0) { MelonLogger.Error("[SR2E] No assets loaded from bundle"); return; }
-
-        MelonCoroutines.Start(SetupMenusCoroutine(__instance));
+        MelonCoroutines.Start(LoadBundleAssetsCoroutine(__instance));
 
         var lang = __instance.LocalizationDirector.GetCurrentLocaleCode();
         LoadLanguage(lang);
@@ -99,8 +84,83 @@ internal class SystemContextPatch
         SR2ECallEventManager.ExecuteWithArgs(CallEvent.AfterSystemContextLoad, ("systemContext", __instance));
     }
 
-    private static IEnumerator SetupMenusCoroutine(SystemContext systemContext)
+    // LoadAsset_Internal is NOT a registered icall in this build.
+    // LoadAssetAsync_Internal IS registered. Invoke it per-asset via il2cpp_runtime_invoke,
+    // passing an IL2CPP string pointer (ManagedStringToIl2Cpp) to bypass ReadOnlySpan marshaling.
+    static IntPtr _loadAssetAsyncMethodPtr = IntPtr.Zero;
+    static IntPtr _objectTypeObjPtr = IntPtr.Zero;
+
+    private static unsafe IntPtr InvokeLoadAssetAsync(IntPtr bundleNativePtr, string name)
     {
+        if (_loadAssetAsyncMethodPtr == IntPtr.Zero)
+        {
+            foreach (var f in typeof(AssetBundle).GetFields(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public))
+            {
+                if (f.FieldType != typeof(IntPtr)) continue;
+                if (!f.Name.Contains("LoadAssetAsync_Internal_Private")) continue;
+                if (f.Name.Contains("Injected")) continue;
+                var v = (IntPtr)f.GetValue(null);
+                if (v != IntPtr.Zero) { _loadAssetAsyncMethodPtr = v; break; }
+            }
+        }
+        if (_loadAssetAsyncMethodPtr == IntPtr.Zero) return IntPtr.Zero;
+
+        if (_objectTypeObjPtr == IntPtr.Zero)
+            _objectTypeObjPtr = IL2CPP.il2cpp_type_get_object(
+                IL2CPP.il2cpp_class_get_type(Il2CppClassPointerStore<Object>.NativeClassPtr));
+        if (_objectTypeObjPtr == IntPtr.Zero) return IntPtr.Zero;
+
+        IntPtr strPtr = IL2CPP.ManagedStringToIl2Cpp(name);
+        if (strPtr == IntPtr.Zero) return IntPtr.Zero;
+
+        IntPtr exc = IntPtr.Zero;
+        void** args = stackalloc void*[2];
+        args[0] = (void*)strPtr;
+        args[1] = (void*)_objectTypeObjPtr;
+        IntPtr result = IL2CPP.il2cpp_runtime_invoke(_loadAssetAsyncMethodPtr, bundleNativePtr, args, ref exc);
+        return exc != IntPtr.Zero ? IntPtr.Zero : result;
+    }
+
+    private static IEnumerator LoadBundleAssetsCoroutine(SystemContext systemContext)
+    {
+        IntPtr bundleNativePtr = IntPtr.Zero;
+        foreach (var f in typeof(Il2CppAssetBundle).GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public))
+        {
+            if (f.FieldType != typeof(IntPtr)) continue;
+            var val = (IntPtr)f.GetValue(bundle);
+            if (val != IntPtr.Zero) { bundleNativePtr = val; break; }
+        }
+        if (bundleNativePtr == IntPtr.Zero) { MelonLogger.Error("[SR2E] Could not get native bundle pointer"); yield break; }
+
+        string[] assetNames = bundle.GetAllAssetNames();
+        if (assetNames == null || assetNames.Length == 0) { MelonLogger.Error("[SR2E] bundle.GetAllAssetNames() returned empty"); yield break; }
+
+        foreach (string name in assetNames)
+        {
+            IntPtr reqPtr = IntPtr.Zero;
+            Exception loadErr = null;
+            try { reqPtr = InvokeLoadAssetAsync(bundleNativePtr, name); }
+            catch (Exception e) { loadErr = e; }
+
+            if (loadErr != null || reqPtr == IntPtr.Zero) { MelonLogger.Warning($"[SR2E] LoadAssetAsync failed for {name}: {loadErr?.Message}"); continue; }
+
+            var req = new AssetBundleRequest(reqPtr);
+            while (!req.isDone) yield return null;
+
+            var asset = req.asset;
+            if (asset == null) continue;
+            if (asset.TryCast<Shader>() != null)
+            {
+                var shader = asset.Cast<Shader>();
+                shader.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                loadedShaders[asset.name] = shader;
+            }
+            assets.Add(asset);
+            bundleAssetsByName[asset.name] = asset;
+        }
+
+        if (assets.Count == 0) { MelonLogger.Error("[SR2E] No assets loaded from bundle"); yield break; }
+
         foreach (var obj in assets)
         {
             if (obj == null) continue;
@@ -183,6 +243,5 @@ internal class SystemContextPatch
             }, 1);
             break;
         }
-        yield break;
     }
 }

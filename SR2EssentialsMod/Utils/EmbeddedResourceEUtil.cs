@@ -128,7 +128,8 @@ public static class EmbeddedResourceEUtil
         byte[] array = new byte[stream.Length];
         stream.Read(array, 0, array.Length);
         Il2CppStructArray<byte> il2cppArray = array;
-        return Il2CppAssetBundleManager.LoadFromMemory(il2cppArray);
+        var memStream = new Il2CppSystem.IO.MemoryStream(il2cppArray);
+        return Il2CppAssetBundleManager.LoadFromStream(memStream);
     }
 
     public static AssetBundle LoadBundle(string filename)

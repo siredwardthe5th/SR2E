@@ -214,10 +214,8 @@ public static class MenuEUtil
 
     private static Texture2D LoadWhitePillBgTex()
     {
-        var ab = Get<AssetBundle>("cc50fee78e6b7bdd6142627acdaf89fa.bundle");
-        if (ab == null) return null;
-        return new Il2CppAssetBundle(ab.Pointer)
-            .LoadAsset("Assets/UI/Textures/MenuDemo/whitePillBg.png")?.TryCast<Texture2D>();
+        return Resources.FindObjectsOfTypeAll<Texture2D>()
+            .FirstOrDefault(t => t != null && t.name == "whitePillBg");
     }
 
     public static Sprite whitePillBg
