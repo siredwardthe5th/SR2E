@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -35,8 +36,10 @@ public static class EmbeddedResourceEUtil
         stream.Read(array, 0, array.Length);
         
         Texture2D texture2D = new Texture2D(1, 1);
-        ImageConversion.LoadImage(texture2D, array);
-        
+        Il2CppStructArray<byte> il2cppImageArray = array;
+        ImageConversion.LoadImage(texture2D, il2cppImageArray, false);
+        GC.KeepAlive(il2cppImageArray);
+
         texture2D.filterMode = FilterMode.Bilinear;
         
         return texture2D;
@@ -124,8 +127,10 @@ public static class EmbeddedResourceEUtil
         System.IO.Stream stream = assembly.GetManifestResourceStream(assembly.GetName().Name + "." + filename);
         byte[] array = new byte[stream.Length];
         stream.Read(array, 0, array.Length);
-        
-        return Il2CppAssetBundleManager.LoadFromMemory(array);
+
+        var tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), assembly.GetName().Name + "_" + filename);
+        System.IO.File.WriteAllBytes(tempPath, array);
+        return Il2CppAssetBundleManager.LoadFromFile(tempPath);
     }
     
     public static AssetBundle LoadBundle(string filename)
@@ -141,8 +146,10 @@ public static class EmbeddedResourceEUtil
         System.IO.Stream stream = assembly.GetManifestResourceStream(assembly.GetName().Name + "." + filename);
         byte[] array = new byte[stream.Length];
         stream.Read(array, 0, array.Length);
-        
-        return AssetBundle.LoadFromMemory(array);
+
+        var tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), assembly.GetName().Name + "_" + filename);
+        System.IO.File.WriteAllBytes(tempPath, array);
+        return AssetBundle.LoadFromFile(tempPath);
     }
     
 }

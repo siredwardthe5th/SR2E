@@ -4,7 +4,7 @@ using SR2E.Menus;
 
 namespace SR2E.Patches.InGame;
 
-[HarmonyPatch(typeof(GameContext), "TakeScreenshot")]
+[HarmonyPatch(typeof(ScreenshotPauseItemModel), nameof(ScreenshotPauseItemModel.InvokeBehavior))]
 internal static class ScreenshotPatch
 {
     internal static System.Collections.IEnumerator WaitForUnpause()

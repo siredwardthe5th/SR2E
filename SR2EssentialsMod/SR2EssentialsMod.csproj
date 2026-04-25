@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Configurations>Debug</Configurations>
     <OutputType>Library</OutputType>
     <RootNamespace>SR2E</RootNamespace>
@@ -10,7 +10,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>embedded</DebugType>
-    <DocumentationFile>bin\Debug\net6.0\SR2E.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\net8.0\SR2E.xml</DocumentationFile>
     <WarningLevel>0</WarningLevel>
     <NoWarn>0436</NoWarn>
   </PropertyGroup>
