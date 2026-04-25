@@ -49,7 +49,8 @@ internal class GameContextPatch
             if (AddModMenuButton.HasFlag())
             {
                 LocalizedString label = AddTranslationFromSR2E("buttons.mods.label", "b.button_mods_sr2e", "UI");
-                new CustomMainMenuButton(label, EmbeddedResourceEUtil.LoadSprite("Assets.modsMenuIcon.png").CopyWithoutMipmaps(), 4, (System.Action)(() => { MenuEUtil.GetMenu<SR2EModMenu>().Open(); }));
+                var modsSprite = EmbeddedResourceEUtil.LoadSprite("Assets.modsMenuIcon.png");
+                new CustomMainMenuButton(label, modsSprite?.CopyWithoutMipmaps(), 4, (System.Action)(() => { MenuEUtil.GetMenu<SR2EModMenu>().Open(); }));
                 new CustomPauseMenuButton(label, 3, (System.Action)(() => { MenuEUtil.GetMenu<SR2EModMenu>().Open(); }));
                 
             }

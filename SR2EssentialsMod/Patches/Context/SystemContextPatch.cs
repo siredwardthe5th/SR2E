@@ -52,7 +52,9 @@ internal class SystemContextPatch
         if (bundle == null) { MelonLogger.Error("[SR2E] Asset bundle failed to load"); return; }
         foreach (string path in bundle.GetAllAssetNames())
         {
-            var asset = bundle.LoadAsset(path);
+            var subassets = bundle.LoadAssetWithSubAssets(path);
+            if (subassets == null || subassets.Length == 0) continue;
+            var asset = subassets[0];
             if (asset.TryCast<Shader>()!=null)
             {
                 var shader = asset.Cast<Shader>();
@@ -111,7 +113,9 @@ internal class SystemContextPatch
                                         
                                         if (!assetEmpty&&rootObject==null)
                                         {
-                                            rootObject = GameObject.Instantiate(bundle.LoadAsset(path), instance.transform);
+                                            var menuSubassets = bundle.LoadAssetWithSubAssets(path);
+                                            if (menuSubassets != null && menuSubassets.Length > 0)
+                                                rootObject = GameObject.Instantiate(menuSubassets[0], instance.transform);
                                         }
                                         if (rootObject == null)
                                         {
