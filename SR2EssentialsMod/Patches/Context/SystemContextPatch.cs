@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Linq;
-using System.Reflection;
 using System;
+using System.Reflection;
+using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.Injection;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using SR2E.Enums;
 using SR2E.Managers;
 using SR2E.Storage;
@@ -18,13 +20,13 @@ internal class SystemContextPatch
     internal static Dictionary<string, Type> menusToInit = new ();
     internal static Dictionary<string, Object> bundleAssetsByName = new (StringComparer.OrdinalIgnoreCase);
 
-    static List<Object> assets = new (); //Prefabs are destroyed
+    static List<Object> assets = new ();
     const string menuPath = "Assets/Menus/";
     const string popUpPath = "Assets/PopUps/";
     const string prefabSuffix = ".prefab";
-    internal static string getPopUpPath(string identifier,SR2EMenuTheme currentTheme)
+
+    internal static string getPopUpPath(string identifier, SR2EMenuTheme currentTheme)
     {
-        //now, currentTheme exists
         string extraTheme = "";
         if (currentTheme != SR2EMenuTheme.Default) extraTheme = "_"+currentTheme.ToString().Split(".")[0];
         return $"{popUpPath}{identifier}{extraTheme}{prefabSuffix}";
@@ -37,15 +39,12 @@ internal class SystemContextPatch
         if (validThemes.Count == 0) return null;
         if(!validThemes.Contains(currentTheme)) currentTheme = validThemes.First();
         SR2ESaveManager.Save();
-        //now, currentTheme exists
         string extraTheme = "";
         if (currentTheme != SR2EMenuTheme.Default) extraTheme = "_"+currentTheme.ToString().Split(".")[0];
         return $"{menuPath}{menuIdentifier.saveKey}{extraTheme}{prefabSuffix}";
     }
-    internal static void Prefix()
-    {
-        didStart = true;
-    }
+
+    internal static void Prefix() { didStart = true; }
 
     internal static void Postfix(SystemContext __instance)
     {
@@ -53,7 +52,6 @@ internal class SystemContextPatch
         bundle = EmbeddedResourceEUtil.LoadIl2CppBundle("Assets.srtwoessentials.assetbundle");
         if (bundle == null) { MelonLogger.Error("[SR2E] Asset bundle failed to load"); return; }
 
-        // Build validThemes from path strings only — no asset loading needed here
         foreach (string path in bundle.GetAllAssetNames())
         {
             if (!path.StartsWith(menuPath, StringComparison.OrdinalIgnoreCase)) continue;
@@ -72,7 +70,6 @@ internal class SystemContextPatch
             MenuEUtil.validThemes[key].Add(theme);
         }
 
-        // Load all assets asynchronously — avoids ReadOnlySpan.GetPinnableReference() which is stripped
         MelonCoroutines.Start(LoadBundleAssetsCoroutine(__instance));
 
         var lang = __instance.LocalizationDirector.GetCurrentLocaleCode();
@@ -87,10 +84,29 @@ internal class SystemContextPatch
         SR2ECallEventManager.ExecuteWithArgs(CallEvent.AfterSystemContextLoad, ("systemContext", __instance));
     }
 
+    // Unity 6 removed synchronous LoadAllAssets. Only async variants remain, but the generated
+    // interop calls a null NativeMethodInfoPtr for LoadAllAssetsAsync() causing ExecutionEngineException.
+    // We find the valid (non-zero) NativeMethodInfoPtr and invoke it directly.
+    private static unsafe IntPtr InvokeLoadAllAssetsAsync(IntPtr bundleNativePtr)
+    {
+        IntPtr methodInfoPtr = IntPtr.Zero;
+        foreach (var f in typeof(AssetBundle).GetFields(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public))
+        {
+            if (f.FieldType != typeof(IntPtr)) continue;
+            if (!f.Name.Contains("LoadAllAssetsAsync")) continue;
+            if (f.Name.Contains("Type")) continue; // skip the Type-param overload
+            var val = (IntPtr)f.GetValue(null);
+            if (val != IntPtr.Zero) { methodInfoPtr = val; break; }
+        }
+        if (methodInfoPtr == IntPtr.Zero) return IntPtr.Zero;
+
+        IntPtr exc = IntPtr.Zero;
+        IntPtr reqPtr = IL2CPP.il2cpp_runtime_invoke(methodInfoPtr, bundleNativePtr, null, ref exc);
+        return exc != IntPtr.Zero ? IntPtr.Zero : reqPtr;
+    }
+
     private static IEnumerator LoadBundleAssetsCoroutine(SystemContext systemContext)
     {
-        // Get the native AssetBundle* pointer from Il2CppAssetBundle via reflection.
-        // Il2CppAssetBundle is a MelonLoader wrapper that stores the native ptr in a private field.
         IntPtr bundleNativePtr = IntPtr.Zero;
         foreach (var f in typeof(Il2CppAssetBundle).GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public))
         {
@@ -98,20 +114,23 @@ internal class SystemContextPatch
             var val = (IntPtr)f.GetValue(bundle);
             if (val != IntPtr.Zero) { bundleNativePtr = val; break; }
         }
+        if (bundleNativePtr == IntPtr.Zero) { MelonLogger.Error("[SR2E] Could not get native bundle pointer"); yield break; }
 
-        if (bundleNativePtr == IntPtr.Zero)
-        {
-            MelonLogger.Error("[SR2E] Could not get native AssetBundle pointer from Il2CppAssetBundle");
-            yield break;
-        }
+        // Invoke LoadAllAssetsAsync via the valid NativeMethodInfoPtr, bypassing the generated
+        // interop which resolves to the null ptr and throws ExecutionEngineException.
+        IntPtr reqPtr = IntPtr.Zero;
+        Exception invokeErr = null;
+        try { reqPtr = InvokeLoadAllAssetsAsync(bundleNativePtr); }
+        catch (Exception e) { invokeErr = e; }
+        if (invokeErr != null || reqPtr == IntPtr.Zero) { MelonLogger.Error($"[SR2E] LoadAllAssetsAsync invoke failed: {invokeErr?.Message}"); yield break; }
 
-        // Wrap native pointer as generated-interop AssetBundle.
-        // LoadAllAssetsAsync takes no string parameter, so it avoids the stripped ReadOnlySpan ICall.
-        var ab = new AssetBundle(bundleNativePtr);
-        var req = ab.LoadAllAssetsAsync();
+        var req = new AssetBundleRequest(reqPtr);
         while (!req.isDone) yield return null;
 
-        foreach (var asset in req.allAssets)
+        var allAssets = req.allAssets;
+        if (allAssets == null) { MelonLogger.Error("[SR2E] req.allAssets is null"); yield break; }
+
+        foreach (var asset in allAssets)
         {
             if (asset == null) continue;
             if (asset.TryCast<Shader>() != null)
