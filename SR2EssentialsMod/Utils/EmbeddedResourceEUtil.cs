@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using MelonLoader.TinyJSON;
+using UnityEngine.Bindings;
 
 namespace SR2E.Utils;
 
@@ -36,10 +37,12 @@ public static class EmbeddedResourceEUtil
         stream.Read(array, 0, array.Length);
         
         Texture2D texture2D = new Texture2D(1, 1);
-        Il2CppStructArray<byte> il2cppImageArray = array;
-        ImageConversion.LoadImage(texture2D, il2cppImageArray, false);
-        GC.KeepAlive(il2cppImageArray);
-
+        unsafe {
+            fixed (byte* ptr = array) {
+                var wrapper = new ManagedSpanWrapper((void*)ptr, array.Length);
+                ImageConversion.LoadImage_Injected(texture2D.Pointer, ref wrapper, false);
+            }
+        }
         texture2D.filterMode = FilterMode.Bilinear;
         
         return texture2D;
@@ -128,9 +131,7 @@ public static class EmbeddedResourceEUtil
         byte[] array = new byte[stream.Length];
         stream.Read(array, 0, array.Length);
 
-        var tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), assembly.GetName().Name + "_" + filename);
-        System.IO.File.WriteAllBytes(tempPath, array);
-        return Il2CppAssetBundleManager.LoadFromFile(tempPath);
+        return Il2CppAssetBundleManager.LoadFromStream(new System.IO.MemoryStream(array));
     }
     
     public static AssetBundle LoadBundle(string filename)
@@ -147,9 +148,7 @@ public static class EmbeddedResourceEUtil
         byte[] array = new byte[stream.Length];
         stream.Read(array, 0, array.Length);
 
-        var tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), assembly.GetName().Name + "_" + filename);
-        System.IO.File.WriteAllBytes(tempPath, array);
-        return AssetBundle.LoadFromFile(tempPath);
+        return AssetBundle.LoadFromStream(new System.IO.MemoryStream(array));
     }
     
 }

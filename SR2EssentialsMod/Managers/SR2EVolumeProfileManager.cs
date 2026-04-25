@@ -67,6 +67,7 @@ public static class SR2EVolumeProfileManager
             
 
                 var comp = ScriptableObject.CreateInstance(type).TryCast<VolumeComponent>();
+                if (comp == null) continue;
                 comp.hideFlags |= HideFlags.DontUnloadUnusedAsset;
                 JsonUtility.FromJsonOverwrite(compData.jsonData, comp);
 

@@ -23,6 +23,7 @@ internal static class SR2PauseMenuButtonPatch
     internal static void Prefix(PauseMenuRoot __instance)
     {
         if (!InjectPauseButtons.HasFlag()) return;
+        if (__instance == null || __instance._pauseItemModelList == null) return;
         if (safeLock) { return; }
         safeLock = true;
         try
