@@ -49,6 +49,7 @@ internal class SystemContextPatch
     {
         if(ChangeSystemContextIsModded.HasFlag()) SystemContext.IsModded = true;
         bundle = EmbeddedResourceEUtil.LoadIl2CppBundle("Assets.srtwoessentials.assetbundle");
+        if (bundle == null) { MelonLogger.Error("[SR2E] Asset bundle failed to load"); return; }
         foreach (string path in bundle.GetAllAssetNames())
         {
             var asset = bundle.LoadAsset(path);

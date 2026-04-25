@@ -35,11 +35,14 @@ public static class EmbeddedResourceEUtil
         byte[] array = new byte[stream.Length];
         stream.Read(array, 0, array.Length);
 
-        Texture2D texture2D = new Texture2D(1, 1);
-        ImageConversion.LoadImage(texture2D, (Il2CppStructArray<byte>)array, false);
-        texture2D.filterMode = FilterMode.Bilinear;
-
-        return texture2D;
+        try
+        {
+            Texture2D texture2D = new Texture2D(1, 1);
+            ImageConversion.LoadImage(texture2D, (Il2CppStructArray<byte>)array, false);
+            texture2D.filterMode = FilterMode.Bilinear;
+            return texture2D;
+        }
+        catch (Exception) { return null; }
     }
 
 
@@ -124,11 +127,9 @@ public static class EmbeddedResourceEUtil
         System.IO.Stream stream = assembly.GetManifestResourceStream(assembly.GetName().Name + "." + filename);
         byte[] array = new byte[stream.Length];
         stream.Read(array, 0, array.Length);
-
         Il2CppStructArray<byte> il2cppArray = array;
-        nint gcHandle = Il2CppInterop.Runtime.IL2CPP.il2cpp_gchandle_new(il2cppArray.Pointer, true);
-        try { return Il2CppAssetBundleManager.LoadFromMemory(il2cppArray); }
-        finally { Il2CppInterop.Runtime.IL2CPP.il2cpp_gchandle_free(gcHandle); }
+        var memStream = new Il2CppSystem.IO.MemoryStream(il2cppArray);
+        return Il2CppAssetBundleManager.LoadFromStream(memStream);
     }
 
     public static AssetBundle LoadBundle(string filename)
