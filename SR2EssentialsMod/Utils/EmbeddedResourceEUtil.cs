@@ -126,7 +126,9 @@ public static class EmbeddedResourceEUtil
         stream.Read(array, 0, array.Length);
 
         Il2CppStructArray<byte> il2cppArray = array;
-        return Il2CppAssetBundleManager.LoadFromMemory(il2cppArray);
+        nint gcHandle = Il2CppInterop.Runtime.IL2CPP.il2cpp_gchandle_new(il2cppArray.Pointer, true);
+        try { return Il2CppAssetBundleManager.LoadFromMemory(il2cppArray); }
+        finally { Il2CppInterop.Runtime.IL2CPP.il2cpp_gchandle_free(gcHandle); }
     }
 
     public static AssetBundle LoadBundle(string filename)
