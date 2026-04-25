@@ -1,3 +1,4 @@
+extern alias UnityEngineFacade;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -131,7 +132,10 @@ public static class EmbeddedResourceEUtil
         byte[] array = new byte[stream.Length];
         stream.Read(array, 0, array.Length);
 
-        return Il2CppAssetBundleManager.LoadFromStream(new System.IO.MemoryStream(array));
+        Il2CppStructArray<byte> il2cppArray = array;
+        nint gcHandle = Il2CppInterop.Runtime.IL2CPP.il2cpp_gchandle_new(il2cppArray.Pointer, true);
+        try { return Il2CppAssetBundleManager.LoadFromMemory(il2cppArray); }
+        finally { Il2CppInterop.Runtime.IL2CPP.il2cpp_gchandle_free(gcHandle); }
     }
     
     public static AssetBundle LoadBundle(string filename)
@@ -148,7 +152,9 @@ public static class EmbeddedResourceEUtil
         byte[] array = new byte[stream.Length];
         stream.Read(array, 0, array.Length);
 
-        return AssetBundle.LoadFromStream(new System.IO.MemoryStream(array));
+        var tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), assembly.GetName().Name + "_" + filename);
+        System.IO.File.WriteAllBytes(tempPath, array);
+        return AssetBundle.LoadFromFile(tempPath);
     }
     
 }

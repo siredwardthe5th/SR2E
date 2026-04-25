@@ -28,8 +28,12 @@
     <None Remove="start.sh" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Libs/*.dll">
+    <Reference Include="Libs/*.dll" Exclude="Libs/UnityEngine.dll">
       <Private>false</Private>
+    </Reference>
+    <Reference Include="Libs/UnityEngine.dll">
+      <Private>false</Private>
+      <Aliases>UnityEngineFacade</Aliases>
     </Reference>
   </ItemGroup>
 </Project>
