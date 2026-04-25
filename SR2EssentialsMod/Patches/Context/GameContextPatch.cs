@@ -6,6 +6,7 @@ using Il2CppMonomiPark.SlimeRancher.UI;
 using SR2E.Buttons;
 using SR2E.Buttons.OptionsUI;
 using SR2E.Components;
+using SR2E.Components.Debug;
 using SR2E.Enums;
 using SR2E.Enums.Sounds;
 using SR2E.Managers;
@@ -49,8 +50,8 @@ internal class GameContextPatch
             if (AddModMenuButton.HasFlag())
             {
                 LocalizedString label = AddTranslationFromSR2E("buttons.mods.label", "b.button_mods_sr2e", "UI");
-                var modsSprite = EmbeddedResourceEUtil.LoadSprite("Assets.modsMenuIcon.png");
-                new CustomMainMenuButton(label, modsSprite?.CopyWithoutMipmaps(), 4, (System.Action)(() => { MenuEUtil.GetMenu<SR2EModMenu>().Open(); }));
+                Sprite modsMenuSprite = EmbeddedResourceEUtil.LoadSprite("Assets.modsMenuIcon.png").CopyWithoutMipmaps();
+                new CustomMainMenuButton(label,modsMenuSprite , 4, (System.Action)(() => { MenuEUtil.GetMenu<SR2EModMenu>().Open(); }));
                 new CustomPauseMenuButton(label, 3, (System.Action)(() => { MenuEUtil.GetMenu<SR2EModMenu>().Open(); }));
                 
             }

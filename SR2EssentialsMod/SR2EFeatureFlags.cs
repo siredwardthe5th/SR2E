@@ -17,17 +17,19 @@ public static class SR2EFeatureFlags
         CommandsLoadCommands,CommandsLoadCheat,CommandsLoadBinding,CommandsLoadWarp,
         CommandsLoadCommon,CommandsLoadMenu,CommandsLoadMiscellaneous,CommandsLoadFun, 
         AllowExpansions,AllowExpansionsV1,AllowExpansionsV2,AllowExpansionsV3,
-        EnableModMenu,EnableConsole,EnableIl2CppDetourExceptionReporting,
-        InjectMainMenuButtons,InjectRanchUIButtons,InjectPauseButtons,InjectTranslations,
+        EnableModMenu,EnableConsole, InjectMainMenuButtons,InjectRanchUIButtons,InjectPauseButtons,InjectTranslations,
         AddCheatMenuButton,AddModMenuButton,CheckForUpdates,AllowAutoUpdate,EnableInfHealth,
         EnableInfEnergy,EnableCheatMenu,EnableLocalizedVersionPatch,EnableThemeMenu,
-        ChangeSystemContextIsModded,AllowPrism, AllowSaveExport, TryFixingInvalidSceneGroups
-        
+        ChangeSystemContextIsModded,AllowPrism, AllowSaveExport, TryFixingInvalidSceneGroups,
     };
 
     private static FeatureFlag[] extraDevFlags => new[] {
         DevMode, Experiments, CommandsLoadDevOnly, CommandsLoadExperimental, IgnoreSaveErrors, 
-        ExperimentalKeyCodes, EnableRepoMenu, UseMockRepo, //InjectOptionsButtons, AddMockOptionsUIButtons
+        ExperimentalKeyCodes, EnableRepoMenu, UseMockRepo, DebugLogging,
+        ShowWorldPopulatorErrors, IgnoreWorldPopulatorErrors
+        
+        //RestoreDebugAbilities, RestoreDebugDebugUI, RestoreDebugDevConsole, RestoreDebugFPSViewer, RestoreDebugPlayerDebug,
+        //InjectOptionsButtons, AddMockOptionsUIButtons
     };
     private static FeatureFlag[] extraBetaFlags => new []{None};
     private static FeatureFlag[] extraAlphaFlags => new []{None};

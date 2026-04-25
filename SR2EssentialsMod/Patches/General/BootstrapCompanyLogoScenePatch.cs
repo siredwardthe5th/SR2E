@@ -2,6 +2,7 @@ using Il2CppMonomiPark.SlimeRancher;
 using Il2CppMonomiPark.SlimeRancher.DataModel;
 using Il2CppMonomiPark.SlimeRancher.Persist;
 using Il2CppMonomiPark.SlimeRancher.UI;
+using SR2E.Patches.Context;
 using SR2E.Storage;
 using UnityEngine.UI;
 
@@ -15,8 +16,7 @@ internal static class BootstrapCompanyLogoScenePatch
     {
         GameObject obj = new GameObject("MLIcon", typeof(RectTransform).il2cppTypeof(), typeof(Image).il2cppTypeof());
         Image img = obj.GetComponent<Image>();
-        var mlSprite = EmbeddedResourceEUtil.LoadSprite("Assets.mlIcon.png");
-        if (mlSprite != null) img.sprite = mlSprite.CopyWithoutMipmaps();
+        img.sprite = EmbeddedResourceEUtil.LoadSprite("Assets.mlIcon.png").CopyWithoutMipmaps();
         img.preserveAspect = true;
         var rt = obj.GetComponent<RectTransform>();
         rt.SetParent(__instance.transform, false);

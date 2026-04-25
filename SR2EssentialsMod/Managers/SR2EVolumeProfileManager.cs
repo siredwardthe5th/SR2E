@@ -62,18 +62,24 @@ public static class SR2EVolumeProfileManager
 
             foreach (var compData in data.components)
             {
-                var type = Il2CppSystem.Type.GetType(compData.typeName);
-                if (type == null) continue;
+                try
+                {
+                    var type = Il2CppSystem.Type.GetType(compData.typeName);
+                    if (type == null) continue;
             
 
-                var rawComp = ScriptableObject.CreateInstance(type);
-                if (rawComp == null) continue;
-                var comp = rawComp.TryCast<VolumeComponent>();
-                if (comp == null) continue;
-                comp.hideFlags |= HideFlags.DontUnloadUnusedAsset;
-                JsonUtility.FromJsonOverwrite(compData.jsonData, comp);
+                    var comp = ScriptableObject.CreateInstance(type).TryCast<VolumeComponent>();
+                    comp.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                    JsonUtility.FromJsonOverwrite(compData.jsonData, comp);
 
-                newProfile.components.Add(comp);
+                    newProfile.components.Add(comp);
+                }
+                catch (Exception e)
+                {
+                    if (TryFixingInvalidVolumePresets.HasFlag())
+                        MelonLogger.Error(compData);
+                    else throw e;
+                }
             }
         
             newProfile.hideFlags |= HideFlags.DontUnloadUnusedAsset;
@@ -188,6 +194,12 @@ public static class SR2EVolumeProfileManager
                     MelonLogger.Error(e);
                     MelonLogger.Error("Error loading volume profile: "+path);
                 }
+            }
+
+            if (ExportAllVolumePresets.HasFlag())
+            {
+                foreach (var pair in presets)
+                    File.WriteAllBytes(SR2EEntryPoint.DataPath + "/" + pair.Key, SaveProfile(pair.Value));
             }
         } catch (Exception e) { }
         

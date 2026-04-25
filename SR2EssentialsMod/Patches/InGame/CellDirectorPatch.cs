@@ -1,18 +1,14 @@
-using HarmonyLib;
-using Il2Cpp;
-using UnityEngine;
-
 namespace SR2E.Patches.InGame;
 
-[HarmonyPatch(typeof(CellDirector), "Start")]
+[HarmonyPatch(typeof(CellDirector), nameof(CellDirector.Start))]
 internal class CellDirectorPatch
 {
     internal static void Postfix(CellDirector __instance)
     {
-        if (((Object)__instance).name == "cellConservatory")
+        if (__instance.name == "cellConservatory")
         {
-            Transform val = ((Component)__instance).transform.Find("Sector/cellLabCave/Sector/FX/PortalCard - Cave (2)");
-            val.position = new Vector3(val.position.x, 7f, val.position.z);
+            var toFix = __instance.transform.Find("Sector/cellLabCave/Sector/FX/PortalCard - Cave (2)");
+            toFix.position = new Vector3(toFix.position.x, 7, toFix.position.z);
         }
     }
 }

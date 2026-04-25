@@ -1,11 +1,6 @@
-using UnityEngine;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using MelonLoader.Utils;
 using SR2E.Storage;
 
-namespace SR2E.Components;
+namespace SR2E.Components.Debug;
 [InjectClass]
 internal class DevelopmentBuildText : MonoBehaviour
 {
@@ -15,8 +10,8 @@ internal class DevelopmentBuildText : MonoBehaviour
     {
         string text = "Development Build";
 
-        GUIStyle style = new GUIStyle();
-        style.font = GUI.skin.label.font;
+        string json = JsonUtility.ToJson(GUI.skin.label);
+        var style = JsonUtility.FromJson<GUIStyle>(json);
         style.fontSize = fontSize;
         style.alignment = TextAnchor.LowerRight;
 

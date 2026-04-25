@@ -1,7 +1,9 @@
 using System;
+using Il2CppInterop.Runtime.Attributes;
 using Il2CppMonomiPark.SlimeRancher.DebugTool;
 using Il2CppTMPro;
 using SR2E.Components;
+using SR2E.Components.Debug;
 using SR2E.Enums;
 using SR2E.Enums.Features;
 using SR2E.Managers;
@@ -12,7 +14,15 @@ namespace SR2E.Menus.Debug;
 
 internal class SR2ENativeDebugUI : SR2EMenu
 {
-    
+    // TODO
+    // DebugUI contains like nothing :/
+    // It gets activated by instantiating
+    // There are 2 variants, one for keyboard, one for gamepad
+    // It has a prefab and some input actions
+    // Maybe some helper like:
+    // GameDebugDirectorHelper
+    // SceneDebugDirectorHelper
+    // Also what are all of those DebugUIHandler <Things>
     internal DebugDirectorFixer ddf => DebugDirectorFixer.Instance;
     public new static MenuIdentifier GetMenuIdentifier() => new ("nativedebugui",SR2EMenuFont.SR2,SR2EMenuTheme.Default,"NativeDebugUI");
     public override bool createCommands => false;
@@ -74,7 +84,8 @@ internal class SR2ENativeDebugUI : SR2EMenu
     }
     public void GoBack()
     {
-        CloseEntries(debugUIs[debugUIs.Count - 1]);
+        if (debugUIs.Count >= 1) CloseEntries(debugUIs[debugUIs.Count - 1]);
+        else Close();
     }
     
     
@@ -83,12 +94,13 @@ internal class SR2ENativeDebugUI : SR2EMenu
         foreach (var ui in debugUIs) ui.gameObject.SetActive(false);
         debugUIs.Remove(toClose);
         Destroy(toClose.gameObject);
-        debugUIs[debugUIs.Count-1].gameObject.SetActive(true);
+        if (debugUIs.Count >= 1) debugUIs[debugUIs.Count-1].gameObject.SetActive(true);
+        else Close();
     }
-    public DebugUI OpenEntries(params DebugUIEntry[] buttons)
+    [HideFromIl2Cpp] public DebugUI OpenEntries(params DebugUIEntry[] buttons)
     {
         foreach (var ui in debugUIs) ui.gameObject.SetActive(false);
-        var instance = Instantiate(debugUIPrefab, (Transform)null);
+        var instance = Instantiate(debugUIPrefab.gameObject, null as Transform);
         instance.transform.parentInternal = transform;
         var debugUI = instance.GetComponent<DebugUI>();
         debugUIs.Add(debugUI);
@@ -97,7 +109,7 @@ internal class SR2ENativeDebugUI : SR2EMenu
         
         return debugUI;
     }
-    public void AddButton(DebugUI debugUI,DebugUIEntry entry)
+    [HideFromIl2Cpp] public void AddButton(DebugUI debugUI,DebugUIEntry entry)
     {
         if (entry == null) return;
         var instance = Instantiate(debugUI.buttonPrefab, debugUI.grid.transform);
@@ -108,13 +120,13 @@ internal class SR2ENativeDebugUI : SR2EMenu
 
         var b = instance.GetObjectRecursively<Button>("Content");
         if(entry.action!=null) b.onClick.AddListener(entry.action);
-        if(entry.closesMenu) b.onClick.AddListener((Action)(() => CloseEntries(debugUI)));
+        if(entry.closesMenu) b.onClick.AddListener((Action)(() => Close()));
     }
     
     public override void OnCloseUIPressed()
     {
         if (MenuEUtil.isAnyPopUpOpen) return;
-        if(debugUIs.Count>1) GoBack();
+        if(debugUIs.Count>=1) GoBack();
         else Close();
     }
 }

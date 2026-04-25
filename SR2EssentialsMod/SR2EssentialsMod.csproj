@@ -6,13 +6,12 @@
     <RootNamespace>SR2E</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AssemblyName>SR2E</AssemblyName>
-    <Nullable>disable</Nullable>
+    <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>embedded</DebugType>
     <DocumentationFile>bin\Debug\net6.0\SR2E.xml</DocumentationFile>
     <WarningLevel>0</WarningLevel>
-    <NoWarn>0436</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="*.csv" />

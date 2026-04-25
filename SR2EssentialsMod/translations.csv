@@ -115,6 +115,8 @@ cmd.bind.description,"Binds a key to a specific command",Bindet einen Befehl/meh
 cmd.bind.extendeddescription,"Binds a key to a specific command, you can even bind multiple. To remove the binding, use the 'unbind' command",Bindet einen Befehl/mehrere Befehle zu einer Taste. Benütze bitte den Befehl namens 'unbind' um alle Bindungen mit einer Taste zu entfernen.
 cmd.clear.success,"Successfully cleared the console!",Die Konsole wurde erfolgreich entleert!
 cmd.clear.description,"Clears the console",Leert die Konsole
+cmd.appearance.success,"Successfully rotated the appearance!","Das Aussehen wurde erfolgreich rotiert!"
+cmd.appearance.description,"Rotates the appearance","Rotates the appearance"
 cmd.clearinv.success,"Successfully cleared your inventory!",Dein Inventar wurde erfolgreich entleert!
 cmd.clearinv.successsingle,"Successfully cleared slot number $1!",Der $1te Slot wurde erfolgreich entleert!
 cmd.clearinv.error.slotdoesntexist,"There are only $1 number of slots!",Es gibt nur $1 Slots!
@@ -146,6 +148,7 @@ cmd.fxplayer.waitforstop,"Please wait for the current FX to stop!","Bitte warte 
 cmd.fxplayer.invalidfxname,"Invalid FX Name!","Kein gültiger Effekt!"
 cmd.fxplayer.description,"Plays an effect in front of you",Spielt ein Effekt vor dir ab
 cmd.give.success,"Successfully gave $1 $2!",Es wurde(n) erfolgreich $1 $2(s/n/en) in dein Inventar gegeben!
+cmd.give.nospace,"There is no space left!","Es ist kein Platz mehr übrig!"
 cmd.give.description,"Gives you items",Gibt dir Items
 cmd.gadget.successadd,"Successfully added $1 to $2!",Du besitzt nun $1 $2(s/n/en) mehr!
 cmd.gadget.successalladd,"Successfully added $1 to everything!",Du besitzt nun $1 von jedem Gadget mehr!
@@ -231,6 +234,8 @@ cmd.flatlook.success,"Successfully activated flatlook!","Flachansicht wurde erfo
 cmd.flatlook.success2,"Successfully deactivated flatlook!","Flachansicht wurde erfolgreich deaktiviert"
 cmd.flatlook.error,"Flatlook couldn't be toggled!","Der Flachansichtstatus konnte nicht verändert werden!"
 cmd.flatlook.description,"Activates or deactivates flatlook","Aktiviert oder deaktiviert Flachansicht"
+cmd.maxfps.success,"Successfully set maximal fps to $1!","Maximale FPS wurde auf $1 gesetzt!"
+cmd.maxfps.description,"Changes the max fps to an arbitrary value","Verändert die maximale FPS auf irgendeine Zahö"
 cmd.party.success,"Successfully enabled party mode!","Der Partymodus wurde erfolgreich aktiviert!"
 cmd.party.success2,"Successfully disabled party mode!","Der Partymodus wurde erfolgreich deaktiviert!"
 cmd.party.description,"Enables or disables party mode","Aktiviert oder deaktiviert den Partymodus"

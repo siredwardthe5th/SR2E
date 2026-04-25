@@ -9,6 +9,7 @@ using Il2CppMonomiPark.SlimeRancher.UI.Framework.Layout;
 using Il2CppMonomiPark.SlimeRancher.UI.MainMenu.Model;
 using SR2E.Components;
 using SR2E.Enums;
+using SR2E.Patches.Context;
 using SR2E.Popups;
 using SR2E.Storage;
 using UnityEngine.InputSystem;

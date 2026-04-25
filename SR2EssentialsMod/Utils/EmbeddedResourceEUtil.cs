@@ -16,9 +16,9 @@ public static class EmbeddedResourceEUtil
         return LoadSprite(fileName,assembly);
     }
     public static Sprite LoadSprite(string fileName, Assembly assembly) => ConvertEUtil.Texture2DToSprite(LoadTexture2D(fileName,assembly));
-
-
-
+    
+    
+    
     public static Texture2D LoadTexture2D(string fileName)
     {
         var method = new StackTrace().GetFrame(1).GetMethod();
@@ -30,23 +30,29 @@ public static class EmbeddedResourceEUtil
         if (assembly == null) return null;
         var realFilename = filename.Replace("/",".");
         if (!(realFilename.EndsWith(".png") || realFilename.EndsWith(".jpg") || realFilename.EndsWith(".exr"))) return null;
-
+        
         System.IO.Stream stream = assembly.GetManifestResourceStream(assembly.GetName().Name + "." + filename);
         byte[] array = new byte[stream.Length];
         stream.Read(array, 0, array.Length);
-
+        
+        Texture2D texture2D = new Texture2D(1, 1);
         try
         {
-            Texture2D texture2D = new Texture2D(1, 1);
-            ImageConversion.LoadImage(texture2D, (Il2CppStructArray<byte>)array, false);
-            texture2D.filterMode = FilterMode.Bilinear;
-            return texture2D;
+            Il2CppImageConversionManager.LoadImage(texture2D, array);
         }
-        catch (Exception) { return null; }
+        catch (Exception e)
+        {
+            MelonLogger.Error(e);
+            return null;
+        }
+        
+        texture2D.filterMode = FilterMode.Bilinear;
+        
+        return texture2D;
     }
 
-
-
+    
+    
     public static Dictionary<string, byte[]> LoadResources(string folderNamespace, bool recursive = false)
     {
         folderNamespace=folderNamespace.Replace("/",".");
@@ -77,8 +83,8 @@ public static class EmbeddedResourceEUtil
         return result;
     }
 
-
-
+    
+    
     public static byte[] LoadResource(string filename)
     {
         var method = new StackTrace().GetFrame(1).GetMethod();
@@ -94,9 +100,9 @@ public static class EmbeddedResourceEUtil
         stream.Read(array, 0, array.Length);
         return array;
     }
-
-
-
+    
+    
+    
     public static string LoadString(string filename)
     {
         var method = new StackTrace().GetFrame(1).GetMethod();
@@ -113,7 +119,7 @@ public static class EmbeddedResourceEUtil
         return System.Text.Encoding.Default.GetString(array);
 
     }
-
+    
     public static Il2CppAssetBundle LoadIl2CppBundle(string filename)
     {
         var method = new StackTrace().GetFrame(1).GetMethod();
@@ -127,28 +133,25 @@ public static class EmbeddedResourceEUtil
         System.IO.Stream stream = assembly.GetManifestResourceStream(assembly.GetName().Name + "." + filename);
         byte[] array = new byte[stream.Length];
         stream.Read(array, 0, array.Length);
-        Il2CppStructArray<byte> il2cppArray = array;
-        var memStream = new Il2CppSystem.IO.MemoryStream(il2cppArray);
-        return Il2CppAssetBundleManager.LoadFromStream(memStream);
+        
+        return Il2CppAssetBundleManager.LoadFromMemory(array);
     }
-
-    public static AssetBundle LoadBundle(string filename)
+    
+    [Obsolete("Currently broken!")] public static AssetBundle LoadBundle(string filename)
     {
         var method = new StackTrace().GetFrame(1).GetMethod();
         var assembly = method.ReflectedType.Assembly;
         return LoadBundle(filename, assembly);
     }
-    public static AssetBundle LoadBundle(string filename, Assembly assembly)
+    [Obsolete("Currently broken!")] public static AssetBundle LoadBundle(string filename, Assembly assembly)
     {
         if(assembly == null) return null;
         filename=filename.Replace("/",".");
         System.IO.Stream stream = assembly.GetManifestResourceStream(assembly.GetName().Name + "." + filename);
         byte[] array = new byte[stream.Length];
         stream.Read(array, 0, array.Length);
-
-        var tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), assembly.GetName().Name + "_" + filename);
-        System.IO.File.WriteAllBytes(tempPath, array);
-        return AssetBundle.LoadFromFile(tempPath);
+        
+        return AssetBundle.LoadFromMemory(array);
     }
-
+    
 }

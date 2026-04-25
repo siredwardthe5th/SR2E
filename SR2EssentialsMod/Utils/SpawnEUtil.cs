@@ -10,7 +10,7 @@ public static class SpawnEUtil
     public static GadgetModel SpawnGadget(this GadgetDefinition def, Vector3 pos, Quaternion rot)
     {
         if (def == null) return null;
-        var modelGadget = sceneContext.GameModel.InstantiateGadgetModel(def, systemContext.SceneLoader.CurrentSceneGroup, pos, false);
+        var modelGadget = sceneContext.GameModel.InstantiateGadgetModel(def, systemContext.SceneLoader.CurrentSceneGroup, pos,false);
         GadgetDirector.InstantiateGadgetFromModel(modelGadget);
         modelGadget.eulerRotation = rot.ToEuler();
         return modelGadget;
@@ -21,7 +21,7 @@ public static class SpawnEUtil
     {
         if (ident == null) return null;
         if (ident.TryCast<GadgetDefinition>()!=null) return SpawnGadget(ident.TryCast<GadgetDefinition>(), pos, rot).GetGameObject();
-        return InstantiationHelpers.InstantiateActor(ident.prefab, sceneContext.RegionRegistry.CurrentSceneGroup, pos, rot);
+        return InstantiationHelpers.InstantiateActorFromModel(sceneContext.GameModel.InstantiateActorModel(ident, sceneContext.RegionRegistry.CurrentSceneGroup, pos, rot, false));
     }
     public static GameObject SpawnDynamic(this GameObject obj, Vector3 pos, Quaternion rot)
     {

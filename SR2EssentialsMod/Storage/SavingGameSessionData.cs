@@ -13,7 +13,7 @@ public class SavingGameSessionData
     public readonly GameMetadata gameMetadata;
     public readonly SavedGameInfoProvider savedGameInfoProvider;
 
-    internal SavingGameSessionData(ISaveReferenceTranslation iSaveReferenceTranslation, SaveReferenceTranslation saveReferenceTranslation,
+    internal SavingGameSessionData(ISaveReferenceTranslation iSaveReferenceTranslation, SaveReferenceTranslation saveReferenceTranslation, 
         GameV10 gameV10, GameModel gameModel, GameMetadata gameMetadata, SavedGameInfoProvider savedGameInfoProvider)
     {
         this.gameMetadata = gameMetadata;

@@ -39,7 +39,6 @@ public static class MenuEUtil
             case SR2EMenuFont.Default: fontAsset = SR2EEntryPoint.normalFont; break;
             case SR2EMenuFont.NotoSans: fontAsset = SR2EEntryPoint.notoSansFont; break;
             case SR2EMenuFont.Bold: fontAsset = SR2EEntryPoint.boldFont; break;
-            case SR2EMenuFont.Regular: fontAsset = SR2EEntryPoint.regularFont; break;
             case SR2EMenuFont.SR2: fontAsset = SR2EEntryPoint.SR2Font; break;
         }
 
@@ -57,7 +56,6 @@ public static class MenuEUtil
             case SR2EMenuFont.Default: fontAsset = SR2EEntryPoint.normalFont; break;
             case SR2EMenuFont.NotoSans: fontAsset = SR2EEntryPoint.notoSansFont; break;
             case SR2EMenuFont.Bold: fontAsset = SR2EEntryPoint.boldFont; break;
-            case SR2EMenuFont.Regular: fontAsset = SR2EEntryPoint.regularFont; break;
             case SR2EMenuFont.SR2: fontAsset = SR2EEntryPoint.SR2Font; break;
         }
 
@@ -197,7 +195,6 @@ public static class MenuEUtil
     }
     public static SR2EMenu GetOpenMenu()
     {
-        if (SR2EEntryPoint.SR2EStuff == null) return null;
         foreach (var child in SR2EEntryPoint.SR2EStuff.GetChildren())
         {
             if (!child.activeSelf) continue;
@@ -213,23 +210,22 @@ public static class MenuEUtil
     private static Sprite _whitePillBg;
     private static Texture2D _whitePillBgTex;
 
-    private static Texture2D LoadWhitePillBgTex()
-    {
-        return Resources.FindObjectsOfTypeAll<Texture2D>()
-            .FirstOrDefault(t => t != null && t.name == "whitePillBg");
-    }
-
     public static Sprite whitePillBg
     {
         get
         {
             if(_whitePillBg==null)
             {
-                _whitePillBgTex = LoadWhitePillBgTex();
-                if (_whitePillBgTex != null)
-                    _whitePillBg = Sprite.Create(_whitePillBgTex,
+                try
+                {
+                    _whitePillBg = Sprite.Create(whitePillBgTex,
                         new Rect(0f, 0f, _whitePillBgTex.width, _whitePillBgTex.height),
                         new Vector2(0.5f, 0.5f), 1f);
+                }
+                catch (Exception e)
+                {
+                    MelonLogger.Error(e);
+                }
             }
 
             return _whitePillBg;
@@ -240,8 +236,24 @@ public static class MenuEUtil
         get
         {
             if(_whitePillBgTex==null)
-                _whitePillBgTex = LoadWhitePillBgTex();
-
+            {
+                foreach (var bundle in Il2CppAssetBundleManager.GetAllLoadedAssetBundles())
+                    try
+                    {
+                        Texture2D tex = bundle.LoadAsset("Assets/UI/Textures/MenuDemo/whitePillBg.png").Cast<Texture2D>();
+                        if (tex == null) continue;
+                        _whitePillBgTex = tex;
+                    } catch (Exception e) { }
+                /*try
+                {
+                    _whitePillBgTex = Get<AssetBundle>("cc50fee78e6b7bdd6142627acdaf89fa.bundle")
+                        .LoadAsset("Assets/UI/Textures/MenuDemo/whitePillBg.png").Cast<Texture2D>();
+                }
+                catch (Exception e)
+                {
+                    MelonLogger.Error(e);
+                }*/
+            }
             return _whitePillBgTex;
         }
     }
